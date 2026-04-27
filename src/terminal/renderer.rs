@@ -23,18 +23,18 @@ impl Renderer {
         self.terminal.write_color("/ /   / / / / ___/ __/ __/ _ \\/ ___/\n", Color::Cyan)?;
         self.terminal.write_color("/ /___/ /_/ (__  ) /_/ /_/  __/ /\n", Color::Cyan)?;
         self.terminal.write_color("\\____/\\__,_/____/\\__/\\__/\\___/_/   \n\n", Color::Cyan)?;
-        self.terminal.write_color("  AI-Powered Coding Assistant\n\n", Color::Green)?;
-        self.terminal.write_color("  Type /help for available commands\n\n", Color::Yellow)?;
+        self.terminal.write_color("  AI 驱动的编码助手\n\n", Color::Green)?;
+        self.terminal.write_color("  输入 /help 或 /帮助 查看可用命令\n\n", Color::Yellow)?;
         Ok(())
     }
 
     pub fn render_message(&mut self, role: &str, content: &str) -> io::Result<()> {
         let (prefix, color) = match role {
-            "user" => ("[USER] ", Color::Blue),
+            "user" => ("[用户] ", Color::Blue),
             "assistant" => ("[CoderX] ", Color::Green),
-            "system" => ("[SYS] ", Color::Yellow),
-            "tool" => ("[TOOL] ", Color::Cyan),
-            _ => ("[UNKNOWN] ", Color::Reset),
+            "system" => ("[系统] ", Color::Yellow),
+            "tool" => ("[工具] ", Color::Cyan),
+            _ => ("[未知] ", Color::Reset),
         };
 
         self.terminal.write_color(prefix, color)?;
@@ -44,7 +44,7 @@ impl Renderer {
     }
 
     pub fn render_tool_use(&mut self, tool_name: &str, args: &str) -> io::Result<()> {
-        self.terminal.write_color("[TOOL] ", Color::Cyan)?;
+        self.terminal.write_color("[工具] ", Color::Cyan)?;
         self.terminal.write(tool_name)?;
         self.terminal.write(" ")?;
         self.terminal.write(args)?;
@@ -66,7 +66,7 @@ impl Renderer {
     }
 
     pub fn render_error(&mut self, message: &str) -> io::Result<()> {
-        self.terminal.write_color("[ERROR] ", Color::Red)?;
+        self.terminal.write_color("[错误] ", Color::Red)?;
         self.terminal.write(message)?;
         self.terminal.write("\n")?;
         Ok(())

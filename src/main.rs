@@ -68,7 +68,7 @@ fn main() -> io::Result<()> {
                 });
 
                 renderer.render_message("user", &content)?;
-                renderer.render_message("system", "Thinking...")?;
+                renderer.render_message("system", "思考中...")?;
 
                 let config = session.get_config();
                 let provider = create_provider(&config.provider);
