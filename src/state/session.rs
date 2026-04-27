@@ -1,5 +1,6 @@
 use std::sync::{Arc, RwLock};
 use std::collections::HashMap;
+use crate::i18n::Language;
 
 #[derive(Debug, Clone)]
 pub struct Config {
@@ -7,6 +8,7 @@ pub struct Config {
     pub provider: String,
     pub max_tokens: usize,
     pub temperature: f32,
+    pub language: Language,
 }
 
 impl Default for Config {
@@ -16,7 +18,19 @@ impl Default for Config {
             provider: "anthropic".to_string(),
             max_tokens: 4096,
             temperature: 0.7,
+            language: Self::detect_language(),
         }
+    }
+}
+
+impl Config {
+    fn detect_language() -> Language {
+        if let Ok(lang) = std::env::var("LANG") {
+            if lang.starts_with("zh") || lang.starts_with("zh_CN") {
+                return Language::Chinese;
+            }
+        }
+        Language::English
     }
 }
 

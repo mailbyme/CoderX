@@ -1,19 +1,30 @@
 use super::{Terminal, Color};
 use std::io;
+use crate::i18n::{Language, translate, USER, SYSTEM, TOOL, ERROR, UNKNOWN, WELCOME_TITLE, WELCOME_HINT};
 
 pub struct Renderer {
     terminal: Terminal,
+    language: Language,
 }
 
 impl Renderer {
-    pub fn new() -> Self {
+    pub fn new(language: Language) -> Self {
         Self {
             terminal: Terminal::new(),
+            language,
         }
     }
 
     pub fn clear(&mut self) -> io::Result<()> {
         self.terminal.clear()
+    }
+
+    pub fn set_language(&mut self, language: Language) {
+        self.language = language;
+    }
+
+    pub fn language(&self) -> Language {
+        self.language
     }
 
     pub fn render_welcome(&mut self) -> io::Result<()> {
@@ -23,28 +34,33 @@ impl Renderer {
         self.terminal.write_color("/ /   / / / / ___/ __/ __/ _ \\/ ___/\n", Color::Cyan)?;
         self.terminal.write_color("/ /___/ /_/ (__  ) /_/ /_/  __/ /\n", Color::Cyan)?;
         self.terminal.write_color("\\____/\\__,_/____/\\__/\\__/\\___/_/   \n\n", Color::Cyan)?;
-        self.terminal.write_color("  AI 驱动的编码助手\n\n", Color::Green)?;
-        self.terminal.write_color("  输入 /help 或 /帮助 查看可用命令\n\n", Color::Yellow)?;
+        
+        let title = translate(&WELCOME_TITLE, self.language);
+        let hint = translate(&WELCOME_HINT, self.language);
+        
+        self.terminal.write_color(&format!("  {}\n\n", title), Color::Green)?;
+        self.terminal.write_color(&format!("  {}\n\n", hint), Color::Yellow)?;
         Ok(())
     }
 
     pub fn render_message(&mut self, role: &str, content: &str) -> io::Result<()> {
         let (prefix, color) = match role {
-            "user" => ("[用户] ", Color::Blue),
+            "user" => (translate(&USER, self.language), Color::Blue),
             "assistant" => ("[CoderX] ", Color::Green),
-            "system" => ("[系统] ", Color::Yellow),
-            "tool" => ("[工具] ", Color::Cyan),
-            _ => ("[未知] ", Color::Reset),
+            "system" => (translate(&SYSTEM, self.language), Color::Yellow),
+            "tool" => (translate(&TOOL, self.language), Color::Cyan),
+            _ => (translate(&UNKNOWN, self.language), Color::Reset),
         };
 
         self.terminal.write_color(prefix, color)?;
+        self.terminal.write(" ")?;
         self.terminal.write(content)?;
         self.terminal.write("\n\n")?;
         Ok(())
     }
 
     pub fn render_tool_use(&mut self, tool_name: &str, args: &str) -> io::Result<()> {
-        self.terminal.write_color("[工具] ", Color::Cyan)?;
+        self.terminal.write_color(&format!("{} ", translate(&TOOL, self.language)), Color::Cyan)?;
         self.terminal.write(tool_name)?;
         self.terminal.write(" ")?;
         self.terminal.write(args)?;
@@ -66,7 +82,7 @@ impl Renderer {
     }
 
     pub fn render_error(&mut self, message: &str) -> io::Result<()> {
-        self.terminal.write_color("[错误] ", Color::Red)?;
+        self.terminal.write_color(&format!("{} ", translate(&ERROR, self.language)), Color::Red)?;
         self.terminal.write(message)?;
         self.terminal.write("\n")?;
         Ok(())

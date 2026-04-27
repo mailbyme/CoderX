@@ -7,12 +7,14 @@ mod tools;
 mod providers;
 mod infrastructure;
 mod utils;
+mod i18n;
 
 use terminal::Renderer;
 use state::{SessionState, MessageStore, Message};
 use state::message_store::SharedMessageStore;
 use commands::{CommandParser, CommandHandlers};
 use providers::Provider;
+use i18n::{Language, translate, THINKING};
 
 fn create_provider(provider_name: &str) -> Box<dyn Provider> {
     match provider_name {
@@ -33,10 +35,12 @@ fn build_context(messages: &SharedMessageStore, prompt: &str) -> String {
 }
 
 fn main() -> io::Result<()> {
-    let mut renderer = Renderer::new();
     let session = SessionState::new();
+    let config = session.get_config();
+    let language = config.language;
+    
+    let mut renderer = Renderer::new(language);
     let messages = MessageStore::new(100);
-    let command_parser = CommandParser;
     let command_handlers = CommandHandlers::new();
 
     renderer.render_welcome()?;
@@ -48,12 +52,21 @@ fn main() -> io::Result<()> {
             commands::ParseResult::Empty => continue,
             
             commands::ParseResult::Command(cmd_name, args) => {
-                let result = command_handlers.execute(&cmd_name, &args, &session, &messages);
-                if result.contains("Exiting") {
+                let current_lang = session.get_config().language;
+                let result = command_handlers.execute(&cmd_name, &args, &session, &messages, current_lang);
+                
+                if result.contains("Exiting") || result.contains("退出") {
                     renderer.render_message("system", &result)?;
                     break;
                 }
-                renderer.terminal().write(&result)?;
+                
+                if cmd_name == "/lang" || cmd_name == "/语言" {
+                    let new_lang = session.get_config().language;
+                    renderer.set_language(new_lang);
+                    renderer.render_welcome()?;
+                } else {
+                    renderer.terminal().write(&result)?;
+                }
             }
             
             commands::ParseResult::Message(content) => {
@@ -68,7 +81,9 @@ fn main() -> io::Result<()> {
                 });
 
                 renderer.render_message("user", &content)?;
-                renderer.render_message("system", "思考中...")?;
+                
+                let thinking_msg = translate(&THINKING, renderer.language());
+                renderer.render_message("system", thinking_msg)?;
 
                 let config = session.get_config();
                 let provider = create_provider(&config.provider);
