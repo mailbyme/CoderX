@@ -25,6 +25,16 @@ fn create_provider_from_config(config: &AppConfig) -> Box<dyn Provider> {
             config.provider.openai.api_key.clone(),
             config.provider.openai.base_url.clone(),
         )),
+        "bedrock" => Box::new(providers::BedrockProvider::new_with_config(
+            config.provider.bedrock.access_key.clone(),
+            config.provider.bedrock.secret_key.clone(),
+            config.provider.bedrock.region.clone(),
+        )),
+        "vertex" => Box::new(providers::VertexProvider::new_with_config(
+            config.provider.vertex.project_id.clone(),
+            config.provider.vertex.location.clone(),
+            config.provider.vertex.api_key.clone(),
+        )),
         _ => Box::new(providers::AnthropicProvider::new_with_config(
             config.provider.anthropic.api_key.clone(),
             config.provider.anthropic.base_url.clone(),
@@ -98,6 +108,7 @@ fn main() -> io::Result<()> {
                     &command_handlers,
                     &history_manager,
                     &current_session_id,
+                    &tool_registry,
                 );
                 
                 if result.contains("Exiting") || result.contains("退出") {
@@ -136,6 +147,16 @@ fn main() -> io::Result<()> {
                 } else if cmd_name == "/provider" || cmd_name == "/提供商" {
                     renderer.terminal().write(&result)?;
                     app_config.save()?;
+                } else if cmd_name == "/commit" || cmd_name == "/提交" {
+                    renderer.terminal().write(&result)?;
+                } else if cmd_name == "/push" || cmd_name == "/推送" {
+                    renderer.terminal().write(&result)?;
+                } else if cmd_name == "/pull" || cmd_name == "/拉取" {
+                    renderer.terminal().write(&result)?;
+                } else if cmd_name == "/git-status" || cmd_name == "/git状态" {
+                    renderer.terminal().write(&result)?;
+                } else if cmd_name == "/git-log" || cmd_name == "/git日志" {
+                    renderer.terminal().write(&result)?;
                 } else {
                     renderer.terminal().write(&result)?;
                 }
@@ -173,6 +194,8 @@ fn main() -> io::Result<()> {
                     provider: app_config.provider.current_provider.clone(),
                     model: match app_config.provider.current_provider.as_str() {
                         "openai" => app_config.provider.openai.model.clone(),
+                        "bedrock" => app_config.provider.bedrock.model.clone(),
+                        "vertex" => app_config.provider.vertex.model.clone(),
                         _ => app_config.provider.anthropic.model.clone(),
                     },
                     language: Language::from_str(&app_config.general.language),
@@ -215,6 +238,7 @@ fn handle_command(
     command_handlers: &CommandHandlers,
     history_manager: &HistoryManager,
     current_session_id: &str,
+    tool_registry: &ToolRegistry,
 ) -> String {
     match cmd_name {
         "/config" | "/配置" => {
@@ -223,18 +247,22 @@ fn handle_command(
                  Provider: {}\n\
                  Anthropic Model: {}\n\
                  OpenAI Model: {}\n\
+                 Bedrock Model: {}\n\
+                 Vertex Model: {}\n\
                  Language: {}\n\
                  Auto-save: {}\n\n",
                 config.provider.current_provider,
                 config.provider.anthropic.model,
                 config.provider.openai.model,
+                config.provider.bedrock.model,
+                config.provider.vertex.model,
                 config.general.language,
                 config.general.auto_save,
             )
         }
         "/set-key" | "/设置密钥" => {
             if args.len() < 2 {
-                return "Usage: /set-key <provider> <key>\nProviders: anthropic, openai\n".to_string();
+                return "Usage: /set-key <provider> <key>\nProviders: anthropic, openai, bedrock, vertex\n".to_string();
             }
             
             let provider = args[0].to_lowercase();
@@ -249,21 +277,41 @@ fn handle_command(
                     config.provider.openai.api_key = Some(key);
                     "OpenAI API key saved!".to_string()
                 }
-                _ => "Unknown provider. Use 'anthropic' or 'openai'".to_string(),
+                "bedrock" => {
+                    if args.len() < 3 {
+                        return "Usage for bedrock: /set-key bedrock <access_key> <secret_key> [region]\n".to_string();
+                    }
+                    config.provider.bedrock.access_key = Some(key.clone());
+                    config.provider.bedrock.secret_key = Some(args[2].to_string());
+                    if args.len() > 3 {
+                        config.provider.bedrock.region = Some(args[3].to_string());
+                    }
+                    "Bedrock credentials saved!".to_string()
+                }
+                "vertex" => {
+                    if args.len() < 4 {
+                        return "Usage for vertex: /set-key vertex <project_id> <location> <api_key>\n".to_string();
+                    }
+                    config.provider.vertex.project_id = Some(args[1].to_string());
+                    config.provider.vertex.location = Some(args[2].to_string());
+                    config.provider.vertex.api_key = Some(args[3..].join(" "));
+                    "Vertex credentials saved!".to_string()
+                }
+                _ => "Unknown provider. Use 'anthropic', 'openai', 'bedrock', or 'vertex'".to_string(),
             }
         }
         "/provider" | "/提供商" => {
             if let Some(provider) = args.first() {
                 let provider = provider.to_lowercase();
                 match provider.as_str() {
-                    "anthropic" | "openai" => {
+                    "anthropic" | "openai" | "bedrock" | "vertex" => {
                         config.provider.current_provider = provider.clone();
                         format!("Provider set to: {}", provider)
                     }
-                    _ => "Unknown provider. Use 'anthropic' or 'openai'".to_string(),
+                    _ => "Unknown provider. Use 'anthropic', 'openai', 'bedrock', or 'vertex'".to_string(),
                 }
             } else {
-                format!("Current provider: {}\nAvailable: anthropic, openai\n", 
+                format!("Current provider: {}\nAvailable: anthropic, openai, bedrock, vertex\n", 
                     config.provider.current_provider)
             }
         }
@@ -328,6 +376,51 @@ fn handle_command(
             match history_manager.delete_session(session_id) {
                 Ok(_) => format!("Session {} deleted.\n", session_id),
                 Err(e) => format!("Failed to delete session: {}\n", e),
+            }
+        }
+        "/git-status" | "/git状态" => {
+            match tool_registry.execute("git", "status") {
+                Ok(result) => result,
+                Err(e) => format!("Git status failed: {}\n", e),
+            }
+        }
+        "/git-log" | "/git日志" => {
+            let limit = args.first().and_then(|s| s.parse::<usize>().ok());
+            let args = match limit {
+                Some(n) => format!("log --oneline -{}", n),
+                None => "log --oneline".to_string(),
+            };
+            match tool_registry.execute("git", &args) {
+                Ok(result) => result,
+                Err(e) => format!("Git log failed: {}\n", e),
+            }
+        }
+        "/commit" | "/提交" => {
+            if args.is_empty() {
+                return "Usage: /commit <message>\n".to_string();
+            }
+            
+            let message = args.join(" ");
+            match tool_registry.execute("git", "add .") {
+                Ok(_) => {
+                    match tool_registry.execute("git", &format!("commit -m \"{}\"", message)) {
+                        Ok(result) => result,
+                        Err(e) => format!("Git commit failed: {}\n", e),
+                    }
+                }
+                Err(e) => format!("Git add failed: {}\n", e),
+            }
+        }
+        "/push" | "/推送" => {
+            match tool_registry.execute("git", "push") {
+                Ok(result) => result,
+                Err(e) => format!("Git push failed: {}\n", e),
+            }
+        }
+        "/pull" | "/拉取" => {
+            match tool_registry.execute("git", "pull") {
+                Ok(result) => result,
+                Err(e) => format!("Git pull failed: {}\n", e),
             }
         }
         _ => {

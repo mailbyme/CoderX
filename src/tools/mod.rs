@@ -2,11 +2,13 @@ pub mod bash;
 pub mod file_read;
 pub mod file_write;
 pub mod grep;
+pub mod git;
 
 pub use bash::BashTool;
 pub use file_read::FileReadTool;
 pub use file_write::FileWriteTool;
 pub use grep::GrepTool;
+pub use git::GitTool;
 
 use std::collections::HashMap;
 
@@ -55,6 +57,7 @@ impl ToolRegistry {
         tools.insert("write_file".to_string(), Box::new(FileWriteTool) as Box<dyn Tool + Send + Sync>);
         tools.insert("grep".to_string(), Box::new(GrepTool) as Box<dyn Tool + Send + Sync>);
         tools.insert("search".to_string(), Box::new(GrepTool) as Box<dyn Tool + Send + Sync>);
+        tools.insert("git".to_string(), Box::new(GitTool) as Box<dyn Tool + Send + Sync>);
         Self { tools }
     }
 
