@@ -6,27 +6,77 @@ on:
       - 'v*'
 
 jobs:
-  build:
-    name: Build and Release
+  build-linux:
+    name: Build Linux
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Build
+        run: cargo build --release
+      - name: Package
+        run: |
+          tar czf coderx-x86_64-unknown-linux-gnu.tar.gz -C target/release cx
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-binary
+          path: coderx-x86_64-unknown-linux-gnu.tar.gz
+
+  build-macos:
+    name: Build macOS
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Build
+        run: cargo build --release
+      - name: Package
+        run: |
+          tar czf coderx-aarch64-apple-darwin.tar.gz -C target/release cx
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-binary
+          path: coderx-aarch64-apple-darwin.tar.gz
+
+  build-windows:
+    name: Build Windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Build
+        run: cargo build --release
+      - name: Package
+        run: Compress-Archive -Path target/release/cx.exe -DestinationPath coderx-x86_64-pc-windows-msvc.zip
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-binary
+          path: coderx-x86_64-pc-windows-msvc.zip
+
+  release:
+    name: Create Release
+    needs: [build-linux, build-macos, build-windows]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Build Linux
-        run: cargo build --release
-
-      - name: Package Linux
-        run: |
-          tar czf coderx-x86_64-unknown-linux-gnu.tar.gz -C target/release cx
-
-      - name: Create Release
+      - name: Download all
+        uses: actions/download-artifact@v4
+      - name: List
+        run: ls -la
+      - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: coderx-x86_64-unknown-linux-gnu.tar.gz
+          files: |
+            linux-binary/coderx-x86_64-unknown-linux-gnu.tar.gz
+            macos-binary/coderx-aarch64-apple-darwin.tar.gz
+            windows-binary/coderx-x86_64-pc-windows-msvc.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
