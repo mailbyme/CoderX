@@ -20,8 +20,7 @@ jobs:
 
       - name: Package
         run: |
-          cd target/release
-          tar czf ../../coderx-x86_64-unknown-linux-gnu.tar.gz cx
+          tar czf coderx-x86_64-unknown-linux-gnu.tar.gz -C target/release cx
 
       - name: Upload
         uses: actions/upload-artifact@v4
@@ -37,14 +36,15 @@ jobs:
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
 
       - name: Build Apple Silicon
         run: cargo build --release --target aarch64-apple-darwin
 
       - name: Package
         run: |
-          cd target/aarch64-apple-darwin/release
-          tar czf ../../coderx-aarch64-apple-darwin.tar.gz cx
+          tar czf coderx-aarch64-apple-darwin.tar.gz -C target/aarch64-apple-darwin/release cx
 
       - name: Upload
         uses: actions/upload-artifact@v4
@@ -82,17 +82,30 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download all binaries
+      - name: Download Linux binary
         uses: actions/download-artifact@v4
         with:
-          path: dist/
+          name: linux-binary
 
-      - name: List downloaded files
-        run: ls -la dist/
+      - name: Download macOS binary
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-binary
+
+      - name: Download Windows binary
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-binary
+
+      - name: List files
+        run: ls -la
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: dist/*/*
+          files: |
+            coderx-x86_64-unknown-linux-gnu.tar.gz
+            coderx-aarch64-apple-darwin.tar.gz
+            coderx-x86_64-pc-windows-msvc.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
