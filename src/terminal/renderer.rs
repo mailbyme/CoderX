@@ -1,6 +1,6 @@
 use super::{Terminal, Color};
 use std::io;
-use crate::i18n::{Language, translate, USER, SYSTEM, TOOL, ERROR, UNKNOWN, WELCOME_TITLE, WELCOME_HINT};
+use crate::i18n::{Language, translate, USER, SYSTEM, TOOL, ERROR, UNKNOWN, WELCOME_HINT};
 
 pub struct Renderer {
     terminal: Terminal,
@@ -29,16 +29,17 @@ impl Renderer {
 
     pub fn render_welcome(&mut self) -> io::Result<()> {
         self.clear()?;
-        self.terminal.write_color("\n  ______           __  __           \n", Color::Cyan)?;
-        self.terminal.write_color(" / ____/_  _______/ /_/ /____  _____\n", Color::Cyan)?;
-        self.terminal.write_color("/ /   / / / / ___/ __/ __/ _ \\/ ___/\n", Color::Cyan)?;
-        self.terminal.write_color("/ /___/ /_/ (__  ) /_/ /_/  __/ /\n", Color::Cyan)?;
-        self.terminal.write_color("\\____/\\__,_/____/\\__/\\__/\\___/_/   \n\n", Color::Cyan)?;
+        self.terminal.write_color("\n", Color::Cyan)?;
+        self.terminal.write_color("   ██████╗ ██████╗ ██████╗ ███████╗\n", Color::Cyan)?;
+        self.terminal.write_color("  ██╔════╝██╔═══██╗██╔══██╗██╔════╝\n", Color::Cyan)?;
+        self.terminal.write_color("  ██║     ██║   ██║██║  ██║█████╗  \n", Color::Cyan)?;
+        self.terminal.write_color("  ██║     ██║   ██║██║  ██║██╔══╝  \n", Color::Cyan)?;
+        self.terminal.write_color("  ╚██████╗╚██████╔╝██████╔╝███████╗\n", Color::Cyan)?;
+        self.terminal.write_color("   ╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝\n", Color::Cyan)?;
+        self.terminal.write_color("              AI Coding Assistant\n\n", Color::Green)?;
         
-        let title = translate(&WELCOME_TITLE, self.language);
         let hint = translate(&WELCOME_HINT, self.language);
         
-        self.terminal.write_color(&format!("  {}\n\n", title), Color::Green)?;
         self.terminal.write_color(&format!("  {}\n\n", hint), Color::Yellow)?;
         Ok(())
     }

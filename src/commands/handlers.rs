@@ -26,6 +26,7 @@ impl CommandHandlers {
         registry.insert("/review".to_string(), Self::handle_review);
         registry.insert("/exit".to_string(), Self::handle_exit);
         registry.insert("/lang".to_string(), Self::handle_lang);
+        registry.insert("/tools".to_string(), Self::handle_tools);
         registry.insert("/帮助".to_string(), Self::handle_help);
         registry.insert("/清空".to_string(), Self::handle_clear);
         registry.insert("/模型".to_string(), Self::handle_model);
@@ -34,6 +35,7 @@ impl CommandHandlers {
         registry.insert("/回顾".to_string(), Self::handle_review);
         registry.insert("/退出".to_string(), Self::handle_exit);
         registry.insert("/语言".to_string(), Self::handle_lang);
+        registry.insert("/工具".to_string(), Self::handle_tools);
         Self { registry }
     }
 
@@ -53,11 +55,18 @@ impl CommandHandlers {
     }
 
     fn handle_help(_args: &[String], _session: &SharedSessionState, _messages: &SharedMessageStore, lang: Language) -> String {
-        format!("\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n\n",
+        let tools_cmd = if lang == Language::Chinese {
+            "/tools         - 列出可用工具"
+        } else {
+            "/tools         - List available tools"
+        };
+        
+        format!("\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n\n",
             translate(&COMMAND_HELP, lang),
             translate(&COMMAND_CLEAR, lang),
             translate(&COMMAND_MODEL, lang),
             translate(&COMMAND_PROVIDER, lang),
+            tools_cmd,
             translate(&COMMAND_INIT, lang),
             translate(&COMMAND_REVIEW, lang),
             translate(&COMMAND_EXIT, lang)
@@ -127,5 +136,37 @@ impl CommandHandlers {
             let current_lang = session.get_config().language;
             format!("Current language: {}\nAvailable: English, Chinese\n", current_lang.display_name())
         }
+    }
+
+    fn handle_tools(_args: &[String], _session: &SharedSessionState, _messages: &SharedMessageStore, lang: Language) -> String {
+        let header = if lang == Language::Chinese {
+            "\n可用工具:\n"
+        } else {
+            "\nAvailable tools:\n"
+        };
+        
+        let mut result = header.to_string();
+        result.push_str("  bash    - Execute shell commands\n");
+        result.push_str("  read    - Read file contents\n");
+        result.push_str("  write   - Write content to file\n");
+        result.push_str("  grep    - Search for patterns in files\n");
+        result.push_str("  search  - Alias for grep\n\n");
+        
+        if lang == Language::Chinese {
+            result = header.to_string();
+            result.push_str("  bash    - 执行 shell 命令\n");
+            result.push_str("  read    - 读取文件内容\n");
+            result.push_str("  write   - 写入文件内容\n");
+            result.push_str("  grep    - 搜索文件中的模式\n");
+            result.push_str("  search  - grep 的别名\n\n");
+        }
+        
+        result
+    }
+}
+
+impl Default for CommandHandlers {
+    fn default() -> Self {
+        Self::new()
     }
 }

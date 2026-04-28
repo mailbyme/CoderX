@@ -15,6 +15,7 @@ use state::message_store::SharedMessageStore;
 use commands::{CommandParser, CommandHandlers};
 use providers::Provider;
 use i18n::{Language, translate, THINKING};
+use tools::ToolRegistry;
 
 fn create_provider(provider_name: &str) -> Box<dyn Provider> {
     match provider_name {
@@ -24,7 +25,7 @@ fn create_provider(provider_name: &str) -> Box<dyn Provider> {
 }
 
 fn build_context(messages: &SharedMessageStore, prompt: &str) -> String {
-    let recent = messages.get_recent(5);
+    let recent = messages.get_recent(10);
     let mut context = String::new();
     
     for msg in recent {
@@ -32,6 +33,29 @@ fn build_context(messages: &SharedMessageStore, prompt: &str) -> String {
     }
     context.push_str(&format!("user: {}", prompt));
     context
+}
+
+fn process_tool_commands(input: &str, tool_registry: &ToolRegistry) -> Option<String> {
+    let input = input.trim();
+    
+    // Check if input starts with a tool name
+    for (tool_name, _) in tool_registry.list() {
+        let prefix = format!("{} ", tool_name);
+        if input.starts_with(&prefix) || input == tool_name {
+            let args = if input.len() > tool_name.len() {
+                &input[tool_name.len() + 1..]
+            } else {
+                ""
+            };
+            
+            match tool_registry.execute(tool_name, args) {
+                Ok(result) => return Some(format!("[Tool: {}]\n{}", tool_name, result)),
+                Err(e) => return Some(format!("[Tool: {}] Error: {}", tool_name, e)),
+            }
+        }
+    }
+    
+    None
 }
 
 fn main() -> io::Result<()> {
@@ -42,6 +66,7 @@ fn main() -> io::Result<()> {
     let mut renderer = Renderer::new(language);
     let messages = MessageStore::new(100);
     let command_handlers = CommandHandlers::new();
+    let tool_registry = ToolRegistry::new();
 
     renderer.render_welcome()?;
 
@@ -64,12 +89,25 @@ fn main() -> io::Result<()> {
                     let new_lang = session.get_config().language;
                     renderer.set_language(new_lang);
                     renderer.render_welcome()?;
+                } else if cmd_name == "/tools" || cmd_name == "/工具" {
+                    renderer.terminal().write("\nAvailable tools:\n")?;
+                    for (name, desc) in tool_registry.list() {
+                        renderer.terminal().write(&format!("  {} - {}\n", name, desc))?;
+                    }
+                    renderer.terminal().write("\n")?;
                 } else {
                     renderer.terminal().write(&result)?;
                 }
             }
             
             commands::ParseResult::Message(content) => {
+                // Check if it's a tool command
+                if let Some(tool_result) = process_tool_commands(&content, &tool_registry) {
+                    renderer.render_message("tool", &tool_result)?;
+                    continue;
+                }
+                
+                // Regular AI query
                 messages.add(Message {
                     id: utils::generate_uuid(),
                     role: "user".to_string(),
@@ -105,7 +143,7 @@ fn main() -> io::Result<()> {
                         });
                     }
                     Err(e) => {
-                        renderer.render_error(&format!("{:?}", e))?;
+                        renderer.render_error(&format!("{}", e))?;
                     }
                 }
             }
