@@ -30,13 +30,18 @@ impl Renderer {
     pub fn render_welcome(&mut self) -> io::Result<()> {
         self.clear()?;
         self.terminal.write_color("\n", Color::Cyan)?;
-        self.terminal.write_color("   ██████╗ ██████╗ ██████╗ ███████╗\n", Color::Cyan)?;
-        self.terminal.write_color("  ██╔════╝██╔═══██╗██╔══██╗██╔════╝\n", Color::Cyan)?;
-        self.terminal.write_color("  ██║     ██║   ██║██║  ██║█████╗  \n", Color::Cyan)?;
-        self.terminal.write_color("  ██║     ██║   ██║██║  ██║██╔══╝  \n", Color::Cyan)?;
-        self.terminal.write_color("  ╚██████╗╚██████╔╝██████╔╝███████╗\n", Color::Cyan)?;
-        self.terminal.write_color("   ╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝\n", Color::Cyan)?;
-        self.terminal.write_color("              AI Coding Assistant\n\n", Color::Green)?;
+        self.terminal.write_color("   ______ ______ ______ ______ \n", Color::Cyan)?;
+        self.terminal.write_color("  |      |      |      |      |\n", Color::Cyan)?;
+        self.terminal.write_color("  | CODER| CODER| CODER|  X   |\n", Color::Cyan)?;
+        self.terminal.write_color("  |______|______|______|______|\n", Color::Cyan)?;
+        self.terminal.write_color("  |      |      |      |      |\n", Color::Cyan)?;
+        self.terminal.write_color("  |______|______|______|______|\n", Color::Cyan)?;
+        self.terminal.write_color("  |      |      |      |      |\n", Color::Cyan)?;
+        self.terminal.write_color("  |______|______|______|______|\n", Color::Cyan)?;
+        self.terminal.write_color("  |      |      |      |      |\n", Color::Cyan)?;
+        self.terminal.write_color("  |______|______|______|______|\n", Color::Cyan)?;
+        self.terminal.write_color("\n", Color::Cyan)?;
+        self.terminal.write_color("          AI Coding Assistant\n\n", Color::Green)?;
         
         let hint = translate(&WELCOME_HINT, self.language);
         
