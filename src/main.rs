@@ -11,7 +11,7 @@ mod i18n;
 mod config;
 
 use terminal::Renderer;
-use state::{SessionState, MessageStore, Message};
+use state::{SessionState, MessageStore, Message, HistoryManager};
 use state::message_store::SharedMessageStore;
 use commands::{CommandParser, CommandHandlers};
 use providers::Provider;
@@ -67,7 +67,6 @@ fn process_tool_commands(input: &str, tool_registry: &ToolRegistry) -> Option<St
 }
 
 fn main() -> io::Result<()> {
-    // Load config from file
     let mut app_config = AppConfig::load()?;
     let language = Language::from_str(&app_config.general.language);
     
@@ -76,6 +75,8 @@ fn main() -> io::Result<()> {
     let messages = MessageStore::new(100);
     let command_handlers = CommandHandlers::new();
     let tool_registry = ToolRegistry::new();
+    let history_manager = HistoryManager::new()?;
+    let current_session_id = utils::generate_uuid();
 
     renderer.render_welcome()?;
 
@@ -87,7 +88,7 @@ fn main() -> io::Result<()> {
             
             commands::ParseResult::Command(cmd_name, args) => {
                 let current_lang = Language::from_str(&app_config.general.language);
-                let result = handle_config_command(
+                let result = handle_command(
                     &cmd_name, 
                     &args, 
                     &mut app_config, 
@@ -95,10 +96,15 @@ fn main() -> io::Result<()> {
                     &messages, 
                     current_lang,
                     &command_handlers,
+                    &history_manager,
+                    &current_session_id,
                 );
                 
                 if result.contains("Exiting") || result.contains("退出") {
                     renderer.render_message("system", &result)?;
+                    if let Err(e) = history_manager.save_history(&current_session_id, &messages) {
+                        renderer.render_error(&format!("Failed to save history: {}", e))?;
+                    }
                     app_config.save()?;
                     break;
                 }
@@ -114,6 +120,14 @@ fn main() -> io::Result<()> {
                         renderer.terminal().write(&format!("  {} - {}\n", name, desc))?;
                     }
                     renderer.terminal().write("\n")?;
+                } else if cmd_name == "/save" || cmd_name == "/保存" {
+                    renderer.terminal().write(&result)?;
+                } else if cmd_name == "/history" || cmd_name == "/历史" {
+                    renderer.terminal().write(&result)?;
+                } else if cmd_name == "/load" || cmd_name == "/加载" {
+                    renderer.terminal().write(&result)?;
+                } else if cmd_name == "/delete-history" || cmd_name == "/删除历史" {
+                    renderer.terminal().write(&result)?;
                 } else if cmd_name == "/config" || cmd_name == "/配置" {
                     renderer.terminal().write(&result)?;
                 } else if cmd_name == "/set-key" || cmd_name == "/设置密钥" {
@@ -191,7 +205,7 @@ fn main() -> io::Result<()> {
     Ok(())
 }
 
-fn handle_config_command(
+fn handle_command(
     cmd_name: &str,
     args: &[String],
     config: &mut AppConfig,
@@ -199,6 +213,8 @@ fn handle_config_command(
     messages: &SharedMessageStore,
     language: Language,
     command_handlers: &CommandHandlers,
+    history_manager: &HistoryManager,
+    current_session_id: &str,
 ) -> String {
     match cmd_name {
         "/config" | "/配置" => {
@@ -249,6 +265,69 @@ fn handle_config_command(
             } else {
                 format!("Current provider: {}\nAvailable: anthropic, openai\n", 
                     config.provider.current_provider)
+            }
+        }
+        "/save" | "/保存" => {
+            match history_manager.save_history(current_session_id, messages) {
+                Ok(_) => format!("History saved to session: {}\n", current_session_id),
+                Err(e) => format!("Failed to save history: {}\n", e),
+            }
+        }
+        "/history" | "/历史" => {
+            match history_manager.list_sessions() {
+                Ok(sessions) => {
+                    if sessions.is_empty() {
+                        "No saved sessions found.\n".to_string()
+                    } else {
+                        let mut result = "\nSaved Sessions:\n".to_string();
+                        for session_id in sessions {
+                            if let Ok(Some(info)) = history_manager.get_session_info(&session_id) {
+                                let preview = if info.preview.len() > 50 {
+                                    &info.preview[..50]
+                                } else {
+                                    &info.preview
+                                };
+                                result.push_str(&format!(
+                                    "  {} - {} messages - {}\n    {}\n",
+                                    info.format_time(),
+                                    info.message_count,
+                                    &session_id[..8],
+                                    preview
+                                ));
+                            }
+                        }
+                        result
+                    }
+                }
+                Err(e) => format!("Failed to list sessions: {}\n", e),
+            }
+        }
+        "/load" | "/加载" => {
+            if args.is_empty() {
+                return "Usage: /load <session_id>\nUse /history to list available sessions.\n".to_string();
+            }
+            
+            let session_id = &args.join("");
+            match history_manager.load_history(session_id) {
+                Ok(loaded_messages) => {
+                    let count = loaded_messages.len();
+                    for msg in loaded_messages {
+                        messages.add(msg);
+                    }
+                    format!("Loaded {} messages from session {}\n", count, session_id)
+                }
+                Err(e) => format!("Failed to load session: {}\n", e),
+            }
+        }
+        "/delete-history" | "/删除历史" => {
+            if args.is_empty() {
+                return "Usage: /delete-history <session_id>\n".to_string();
+            }
+            
+            let session_id = &args.join("");
+            match history_manager.delete_session(session_id) {
+                Ok(_) => format!("Session {} deleted.\n", session_id),
+                Err(e) => format!("Failed to delete session: {}\n", e),
             }
         }
         _ => {
