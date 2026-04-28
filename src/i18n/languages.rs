@@ -127,33 +127,33 @@ pub const COMMAND_EXIT: Translation = tr!(
 );
 
 pub const UNKNOWN_COMMAND: Translation = tr!(
-    "Unknown command: {}. Type /help for available commands.",
-    "未知命令: {}. 输入 /help 查看可用命令。"
+    "Unknown command: {0}. Type /help for available commands.",
+    "未知命令: {0}. 输入 /help 查看可用命令。"
 );
 
 pub const MODEL_SET: Translation = tr!(
-    "Model set to: {}",
-    "模型已设置为: {}"
+    "Model set to: {0}",
+    "模型已设置为: {0}"
 );
 
 pub const MODEL_CURRENT: Translation = tr!(
-    "Current model: {}",
-    "当前模型: {}"
+    "Current model: {0}",
+    "当前模型: {0}"
 );
 
 pub const PROVIDER_SET: Translation = tr!(
-    "Provider set to: {}",
-    "提供商已设置为: {}"
+    "Provider set to: {0}",
+    "提供商已设置为: {0}"
 );
 
 pub const PROVIDER_CURRENT: Translation = tr!(
-    "Current provider: {}",
-    "当前提供商: {}"
+    "Current provider: {0}",
+    "当前提供商: {0}"
 );
 
 pub const PROVIDER_INVALID: Translation = tr!(
-    "Invalid provider. Valid options: {}",
-    "无效的提供商。有效选项: {}"
+    "Invalid provider. Valid options: {0}",
+    "无效的提供商。有效选项: {0}"
 );
 
 pub const INIT_START: Translation = tr!(
@@ -177,8 +177,8 @@ pub const INIT_READY: Translation = tr!(
 );
 
 pub const REVIEW_CONTEXT: Translation = tr!(
-    "Conversation context: {} messages",
-    "对话上下文: {} 条消息"
+    "Conversation context: {0} messages",
+    "对话上下文: {0} 条消息"
 );
 
 pub const EXIT_MESSAGE: Translation = tr!(

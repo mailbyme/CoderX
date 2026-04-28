@@ -120,13 +120,41 @@ impl CommandHandlers {
             translate_fmt(&MODEL_SET, lang, &[model])
         } else {
             let current_model = &session.get_config().model;
-            translate_fmt(&MODEL_CURRENT, lang, &[current_model])
+            if lang == Language::Chinese {
+                format!("\
+当前模型: {0}
+
+常用模型选项:
+  Claude: claude-3-opus-20240229, claude-3-sonnet-20240229, claude-3-haiku-20240307
+  OpenAI: gpt-4o, gpt-4-turbo, gpt-3.5-turbo
+  Qwen: qwen-turbo, qwen-plus, qwen-max
+  DeepSeek: deepseek-chat, deepseek-coder
+  GLM: glm-4, glm-3-turbo
+  其他: mistral-large, meta-llama-3-70b-instruct
+
+使用示例: /model claude-3-sonnet-20240229
+", current_model)
+            } else {
+                format!("\
+Current model: {0}
+
+Popular model options:
+  Claude: claude-3-opus-20240229, claude-3-sonnet-20240229, claude-3-haiku-20240307
+  OpenAI: gpt-4o, gpt-4-turbo, gpt-3.5-turbo
+  Qwen: qwen-turbo, qwen-plus, qwen-max
+  DeepSeek: deepseek-chat, deepseek-coder
+  GLM: glm-4, glm-3-turbo
+  Others: mistral-large, meta-llama-3-70b-instruct
+
+Example: /model claude-3-sonnet-20240229
+", current_model)
+            }
         }
     }
 
     fn handle_provider(args: &[String], session: &SharedSessionState, _messages: &SharedMessageStore, lang: Language) -> String {
         if let Some(provider) = args.first() {
-            let valid_providers = ["anthropic", "openai", "bedrock", "vertex", "foundry"];
+            let valid_providers = ["anthropic", "openai", "bedrock", "vertex"];
             if valid_providers.contains(&provider.as_str()) {
                 let mut config = session.get_config();
                 config.provider = provider.clone();
@@ -137,7 +165,31 @@ impl CommandHandlers {
             }
         } else {
             let current_provider = &session.get_config().provider;
-            translate_fmt(&PROVIDER_CURRENT, lang, &[current_provider])
+            if lang == Language::Chinese {
+                format!("\
+当前提供商: {0}
+
+可用的 API 提供商:
+  anthropic  - Claude AI
+  openai     - OpenAI (GPT-4, GPT-3.5)
+  bedrock    - AWS Bedrock (Claude, Llama, etc.)
+  vertex     - Google Vertex AI (Gemini, PaLM)
+
+使用示例: /provider anthropic
+", current_provider)
+            } else {
+                format!("\
+Current provider: {0}
+
+Available API providers:
+  anthropic  - Claude AI
+  openai     - OpenAI (GPT-4, GPT-3.5)
+  bedrock    - AWS Bedrock (Claude, Llama, etc.)
+  vertex     - Google Vertex AI (Gemini, PaLM)
+
+Example usage: /provider anthropic
+", current_provider)
+            }
         }
     }
 
