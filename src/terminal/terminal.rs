@@ -119,33 +119,26 @@ impl Terminal {
 
 #[cfg(windows)]
 mod windows_terminal {
-    use winapi::um::consoleapi::{GetConsoleMode, SetConsoleMode, GetConsoleScreenBufferInfo};
-    use winapi::um::winbase::STD_OUTPUT_HANDLE;
-    use winapi::um::processenv::GetStdHandle;
+    // 不使用 winapi，用简单的默认实现
+    // 这样可以保持零第三方依赖
 
     pub fn enable_vt100() {
-        unsafe {
-            let handle = GetStdHandle(STD_OUTPUT_HANDLE);
-            let mut mode = 0u32;
-            if GetConsoleMode(handle, &mut mode) != 0 {
-                mode |= 0x0004;
-                SetConsoleMode(handle, mode);
-            }
-        }
+        // Windows VT100 支持：不使用 winapi，因为我们要零依赖
+        // 在现代 Windows 版本上，VT100 通常已经启用
+        // 如果需要更高级的功能，用户可以手动设置
+        // 这里我们简单地什么都不做，保持兼容性
     }
 
     pub fn get_terminal_size() -> (u16, u16) {
-        unsafe {
-            let mut csbi = winapi::um::wincon::CONSOLE_SCREEN_BUFFER_INFO::default();
-            let handle = GetStdHandle(STD_OUTPUT_HANDLE);
-            if GetConsoleScreenBufferInfo(handle, &mut csbi) != 0 {
-                (
-                    csbi.srWindow.Right - csbi.srWindow.Left + 1,
-                    csbi.srWindow.Bottom - csbi.srWindow.Top + 1,
-                )
-            } else {
-                (80, 24)
-            }
-        }
+        // 尝试从环境变量获取，或者返回默认值
+        let cols = std::env::var("COLUMNS")
+            .unwrap_or("80".to_string())
+            .parse()
+            .unwrap_or(80);
+        let lines = std::env::var("LINES")
+            .unwrap_or("24".to_string())
+            .parse()
+            .unwrap_or(24);
+        (cols, lines)
     }
 }

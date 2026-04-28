@@ -157,7 +157,7 @@ impl FileIndex {
         if let Some(&idx) = self.path_map.get(path) {
             self.files.remove(idx);
             self.path_map.remove(path);
-            for (file, old_idx) in self.path_map.iter_mut() {
+            for (_file, old_idx) in self.path_map.iter_mut() {
                 if *old_idx > idx {
                     *old_idx -= 1;
                 }

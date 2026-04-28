@@ -39,7 +39,7 @@ impl WenxinProvider {
             .unwrap_or("https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop/chat/completions".to_string())
     }
 
-    fn build_request_body(model: &str, max_tokens: usize, temperature: f32, system: &str, messages: &[JsonValue]) -> String {
+    fn build_request_body(_model: &str, max_tokens: usize, temperature: f32, system: &str, messages: &[JsonValue]) -> String {
         let mut all_messages = vec![
             JsonParser::object(&[
                 ("role", JsonParser::string("user")),

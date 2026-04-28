@@ -3,7 +3,7 @@ use std::fs;
 use std::path::PathBuf;
 use std::io;
 
-use super::types::{Plugin, PluginManifest, CommandDefinition, AbilityDefinition};
+use super::types::{Plugin, PluginManifest};
 
 pub struct PluginManager {
     plugins: HashMap<String, Plugin>,
@@ -83,15 +83,15 @@ impl PluginManager {
         let mut manifest = PluginManifest::new("unknown");
 
         let lines: Vec<&str> = content.lines().collect();
-        let mut in_object = false;
-        let mut current_key = String::new();
+        let mut _in_object = false;
+        let mut _current_key = String::new();
         let mut depth = 0;
 
         for line in lines {
             let trimmed = line.trim();
 
             if trimmed == "{" {
-                in_object = true;
+                _in_object = true;
                 depth += 1;
                 continue;
             }

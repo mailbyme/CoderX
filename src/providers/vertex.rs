@@ -55,7 +55,7 @@ impl VertexProvider {
         })
     }
 
-    fn build_request_body(model: &str, max_tokens: usize, temperature: f32, prompt: &str) -> String {
+    fn build_request_body(_model: &str, max_tokens: usize, temperature: f32, prompt: &str) -> String {
         JsonParser::serialize(&JsonParser::object(&[
             ("contents", JsonParser::array(&[JsonParser::object(&[
                 ("parts", JsonParser::array(&[JsonParser::object(&[

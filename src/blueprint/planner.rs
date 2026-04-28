@@ -1,4 +1,4 @@
-use super::types::{Plan, PlanStep, PlanStatus};
+use super::types::{Plan, PlanStep};
 
 pub struct BlueprintEngine {
     max_steps: usize,

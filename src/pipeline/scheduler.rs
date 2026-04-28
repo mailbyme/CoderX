@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
 
-use super::item::{PipelineItem, PipelineItemStatus, PipelineItemPriority};
+use super::item::{PipelineItem, PipelineItemStatus};
 use super::pipeline::Pipeline;
 
 pub struct PipelineScheduler {

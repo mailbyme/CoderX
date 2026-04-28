@@ -24,10 +24,10 @@ impl ContextCompressor {
         }
     }
 
-    pub fn compress(&self, messages: &[Message], target_tokens: usize) -> CompressionResult {
+    pub fn compress(&self, messages: &[Message], _target_tokens: usize) -> CompressionResult {
         let original_tokens = self.estimator.estimate_messages(messages);
 
-        if original_tokens <= target_tokens {
+        if original_tokens <= _target_tokens {
             return CompressionResult {
                 original_tokens,
                 compressed_tokens: original_tokens,
@@ -51,7 +51,7 @@ impl ContextCompressor {
         &self,
         messages: &[Message],
         from_start: usize,
-        target_tokens: usize,
+        _target_tokens: usize,
     ) -> CompressionResult {
         let original_tokens = self.estimator.estimate_messages(messages);
 
