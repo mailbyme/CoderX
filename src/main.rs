@@ -35,6 +35,50 @@ fn create_provider_from_config(config: &AppConfig) -> Box<dyn Provider> {
             config.provider.vertex.location.clone(),
             config.provider.vertex.api_key.clone(),
         )),
+        "meta" => Box::new(providers::MetaProvider::new_with_config(
+            config.provider.meta.api_key.clone(),
+            config.provider.meta.base_url.clone(),
+        )),
+        "mistral" => Box::new(providers::MistralProvider::new_with_config(
+            config.provider.mistral.api_key.clone(),
+            config.provider.mistral.base_url.clone(),
+        )),
+        "qwen" => Box::new(providers::QwenProvider::new_with_config(
+            config.provider.qwen.api_key.clone(),
+            config.provider.qwen.base_url.clone(),
+        )),
+        "wenxin" => Box::new(providers::WenxinProvider::new_with_config(
+            config.provider.wenxin.api_key.clone(),
+            config.provider.wenxin.base_url.clone(),
+        )),
+        "hunyuan" => Box::new(providers::HunyuanProvider::new_with_config(
+            config.provider.hunyuan.api_key.clone(),
+            config.provider.hunyuan.base_url.clone(),
+        )),
+        "glm" => Box::new(providers::GlmProvider::new_with_config(
+            config.provider.glm.api_key.clone(),
+            config.provider.glm.base_url.clone(),
+        )),
+        "deepseek" => Box::new(providers::DeepSeekProvider::new_with_config(
+            config.provider.deepseek.api_key.clone(),
+            config.provider.deepseek.base_url.clone(),
+        )),
+        "yi" => Box::new(providers::YiProvider::new_with_config(
+            config.provider.yi.api_key.clone(),
+            config.provider.yi.base_url.clone(),
+        )),
+        "cohere" => Box::new(providers::CohereProvider::new_with_config(
+            config.provider.cohere.api_key.clone(),
+            config.provider.cohere.base_url.clone(),
+        )),
+        "xiaomi" => Box::new(providers::XiaomiProvider::new_with_config(
+            config.provider.xiaomi.api_key.clone(),
+            config.provider.xiaomi.base_url.clone(),
+        )),
+        "custom" => Box::new(providers::CustomProvider::new_with_config(
+            config.provider.custom.api_key.clone(),
+            config.provider.custom.base_url.clone(),
+        )),
         _ => Box::new(providers::AnthropicProvider::new_with_config(
             config.provider.anthropic.api_key.clone(),
             config.provider.anthropic.base_url.clone(),
@@ -190,18 +234,29 @@ fn main() -> io::Result<()> {
                 let context = build_context(&messages, &content);
                 
                 // Create a compatible config for providers
-                let provider_config = state::Config {
-                    provider: app_config.provider.current_provider.clone(),
-                    model: match app_config.provider.current_provider.as_str() {
-                        "openai" => app_config.provider.openai.model.clone(),
-                        "bedrock" => app_config.provider.bedrock.model.clone(),
-                        "vertex" => app_config.provider.vertex.model.clone(),
-                        _ => app_config.provider.anthropic.model.clone(),
-                    },
-                    language: Language::from_str(&app_config.general.language),
-                    temperature: 0.7,
-                    max_tokens: 4096,
-                };
+        let provider_config = state::Config {
+            provider: app_config.provider.current_provider.clone(),
+            model: match app_config.provider.current_provider.as_str() {
+                "openai" => app_config.provider.openai.model.clone(),
+                "bedrock" => app_config.provider.bedrock.model.clone(),
+                "vertex" => app_config.provider.vertex.model.clone(),
+                "meta" => app_config.provider.meta.model.clone(),
+                "mistral" => app_config.provider.mistral.model.clone(),
+                "qwen" => app_config.provider.qwen.model.clone(),
+                "wenxin" => app_config.provider.wenxin.model.clone(),
+                "hunyuan" => app_config.provider.hunyuan.model.clone(),
+                "glm" => app_config.provider.glm.model.clone(),
+                "deepseek" => app_config.provider.deepseek.model.clone(),
+                "yi" => app_config.provider.yi.model.clone(),
+                "cohere" => app_config.provider.cohere.model.clone(),
+                "xiaomi" => app_config.provider.xiaomi.model.clone(),
+                "custom" => app_config.provider.custom.model.clone(),
+                _ => app_config.provider.anthropic.model.clone(),
+            },
+            language: Language::from_str(&app_config.general.language),
+            temperature: 0.7,
+            max_tokens: 4096,
+        };
 
                 match provider.generate(&context, &provider_config) {
                     Ok(response) => {
@@ -262,34 +317,33 @@ fn handle_command(
         }
         "/set-key" | "/设置密钥" => {
             if args.len() < 2 {
-                return "Usage: /set-key <provider> <key>\nProviders: anthropic, openai, bedrock, vertex\n".to_string();
+                return "Usage: /set-key <provider> <key>\nProviders: anthropic, openai, bedrock, vertex, meta, mistral, qwen, wenxin, hunyuan, glm, deepseek, yi, cohere, xiaomi, custom\nFor bedrock: /set-key bedrock <access_key> <secret_key> [region]\nFor vertex: /set-key vertex <project_id> <location> <api_key>\n".to_string();
             }
             
             let provider = args[0].to_lowercase();
-            let key = args[1..].join(" ");
             
             match provider.as_str() {
                 "anthropic" => {
-                    config.provider.anthropic.api_key = Some(key);
+                    config.provider.anthropic.api_key = Some(args[1..].join(" "));
                     "Anthropic API key saved!".to_string()
                 }
                 "openai" => {
-                    config.provider.openai.api_key = Some(key);
+                    config.provider.openai.api_key = Some(args[1..].join(" "));
                     "OpenAI API key saved!".to_string()
                 }
                 "bedrock" => {
-                    if args.len() < 3 {
+                    if args.len() < 4 {
                         return "Usage for bedrock: /set-key bedrock <access_key> <secret_key> [region]\n".to_string();
                     }
-                    config.provider.bedrock.access_key = Some(key.clone());
+                    config.provider.bedrock.access_key = Some(args[1].to_string());
                     config.provider.bedrock.secret_key = Some(args[2].to_string());
-                    if args.len() > 3 {
+                    if args.len() > 4 {
                         config.provider.bedrock.region = Some(args[3].to_string());
                     }
                     "Bedrock credentials saved!".to_string()
                 }
                 "vertex" => {
-                    if args.len() < 4 {
+                    if args.len() < 5 {
                         return "Usage for vertex: /set-key vertex <project_id> <location> <api_key>\n".to_string();
                     }
                     config.provider.vertex.project_id = Some(args[1].to_string());
@@ -297,7 +351,51 @@ fn handle_command(
                     config.provider.vertex.api_key = Some(args[3..].join(" "));
                     "Vertex credentials saved!".to_string()
                 }
-                _ => "Unknown provider. Use 'anthropic', 'openai', 'bedrock', or 'vertex'".to_string(),
+                "meta" => {
+                    config.provider.meta.api_key = Some(args[1..].join(" "));
+                    "Meta API key saved!".to_string()
+                }
+                "mistral" => {
+                    config.provider.mistral.api_key = Some(args[1..].join(" "));
+                    "Mistral API key saved!".to_string()
+                }
+                "qwen" => {
+                    config.provider.qwen.api_key = Some(args[1..].join(" "));
+                    "Qwen API key saved!".to_string()
+                }
+                "wenxin" => {
+                    config.provider.wenxin.api_key = Some(args[1..].join(" "));
+                    "Wenxin API key saved!".to_string()
+                }
+                "hunyuan" => {
+                    config.provider.hunyuan.api_key = Some(args[1..].join(" "));
+                    "Hunyuan API key saved!".to_string()
+                }
+                "glm" => {
+                    config.provider.glm.api_key = Some(args[1..].join(" "));
+                    "GLM API key saved!".to_string()
+                }
+                "deepseek" => {
+                    config.provider.deepseek.api_key = Some(args[1..].join(" "));
+                    "DeepSeek API key saved!".to_string()
+                }
+                "yi" => {
+                    config.provider.yi.api_key = Some(args[1..].join(" "));
+                    "Yi API key saved!".to_string()
+                }
+                "cohere" => {
+                    config.provider.cohere.api_key = Some(args[1..].join(" "));
+                    "Cohere API key saved!".to_string()
+                }
+                "xiaomi" => {
+                    config.provider.xiaomi.api_key = Some(args[1..].join(" "));
+                    "Xiaomi API key saved!".to_string()
+                }
+                "custom" => {
+                    config.provider.custom.api_key = Some(args[1..].join(" "));
+                    "Custom API key saved!".to_string()
+                }
+                _ => "Unknown provider. Use 'anthropic', 'openai', 'bedrock', 'vertex', 'meta', 'mistral', 'qwen', 'wenxin', 'hunyuan', 'glm', 'deepseek', 'yi', 'cohere', 'xiaomi', or 'custom'".to_string(),
             }
         }
         "/provider" | "/提供商" => {

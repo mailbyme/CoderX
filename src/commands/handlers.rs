@@ -153,8 +153,13 @@ Example: /model claude-3-sonnet-20240229
     }
 
     fn handle_provider(args: &[String], session: &SharedSessionState, _messages: &SharedMessageStore, lang: Language) -> String {
+        let valid_providers = [
+            "anthropic", "openai", "bedrock", "vertex", "meta", "mistral",
+            "qwen", "wenxin", "hunyuan", "glm", "deepseek", "yi", "cohere", 
+            "xiaomi", "custom"
+        ];
+        
         if let Some(provider) = args.first() {
-            let valid_providers = ["anthropic", "openai", "bedrock", "vertex"];
             if valid_providers.contains(&provider.as_str()) {
                 let mut config = session.get_config();
                 config.provider = provider.clone();
@@ -174,6 +179,17 @@ Example: /model claude-3-sonnet-20240229
   openai     - OpenAI (GPT-4, GPT-3.5)
   bedrock    - AWS Bedrock (Claude, Llama, etc.)
   vertex     - Google Vertex AI (Gemini, PaLM)
+  meta       - Meta (Llama)
+  mistral    - Mistral AI
+  qwen       - 阿里云（通义千问）
+  wenxin     - 百度（文心一言）
+  hunyuan    - 腾讯（混元大模型）
+  glm        - 智谱 AI（GLM）
+  deepseek   - DeepSeek
+  yi         - 零一万物（Yi）
+  cohere     - Cohere
+  xiaomi     - 小米 AI
+  custom     - 自定义 API
 
 使用示例: /provider anthropic
 ", current_provider)
@@ -186,6 +202,17 @@ Available API providers:
   openai     - OpenAI (GPT-4, GPT-3.5)
   bedrock    - AWS Bedrock (Claude, Llama, etc.)
   vertex     - Google Vertex AI (Gemini, PaLM)
+  meta       - Meta (Llama)
+  mistral    - Mistral AI
+  qwen       - Alibaba Cloud (Qwen)
+  wenxin     - Baidu (Wenxin)
+  hunyuan    - Tencent (Hunyuan)
+  glm        - Zhipu AI (GLM)
+  deepseek   - DeepSeek
+  yi         - 01.AI (Yi)
+  cohere     - Cohere
+  xiaomi     - Xiaomi AI
+  custom     - Custom API
 
 Example usage: /provider anthropic
 ", current_provider)
