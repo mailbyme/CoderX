@@ -3,20 +3,40 @@ use crate::infrastructure::{HttpClient, JsonParser, JsonValue};
 
 pub struct OpenAIProvider {
     http_client: HttpClient,
+    api_key: Option<String>,
+    base_url: Option<String>,
 }
 
 impl OpenAIProvider {
     pub fn new() -> Self {
         Self {
             http_client: HttpClient::new(),
+            api_key: None,
+            base_url: None,
         }
     }
 
-    fn get_api_key() -> Result<String, ProviderError> {
+    pub fn new_with_config(api_key: Option<String>, base_url: Option<String>) -> Self {
+        Self {
+            http_client: HttpClient::new(),
+            api_key,
+            base_url,
+        }
+    }
+
+    fn get_api_key(&self) -> Result<String, ProviderError> {
+        if let Some(key) = &self.api_key {
+            return Ok(key.clone());
+        }
         std::env::var("OPENAI_API_KEY")
             .map_err(|_| ProviderError::AuthError(
-                "OPENAI_API_KEY environment variable not set. Please set it with: export OPENAI_API_KEY=your-key".to_string()
+                "OPENAI_API_KEY not set. Use /set-key openai <key> or set environment variable".to_string()
             ))
+    }
+
+    fn get_base_url(&self) -> String {
+        self.base_url.clone()
+            .unwrap_or("https://api.openai.com/v1/chat/completions".to_string())
     }
 
     fn build_request_body(model: &str, max_tokens: usize, temperature: f32, system: &str, messages: &[JsonValue]) -> String {
@@ -71,7 +91,8 @@ impl Provider for OpenAIProvider {
     }
 
     fn generate_with_system(&self, system: &str, context: &str, config: &crate::state::Config) -> Result<String, ProviderError> {
-        let api_key = Self::get_api_key()?;
+        let api_key = self.get_api_key()?;
+        let base_url = self.get_base_url();
 
         let messages = vec![
             JsonParser::object(&[
@@ -101,7 +122,7 @@ impl Provider for OpenAIProvider {
         ];
 
         let response = self.http_client.post(
-            "https://api.openai.com/v1/chat/completions",
+            &base_url,
             &body,
             headers,
         )?;
