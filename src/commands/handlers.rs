@@ -55,22 +55,57 @@ impl CommandHandlers {
     }
 
     fn handle_help(_args: &[String], _session: &SharedSessionState, _messages: &SharedMessageStore, lang: Language) -> String {
-        let tools_cmd = if lang == Language::Chinese {
-            "/tools         - 列出可用工具"
+        if lang == Language::Chinese {
+            format!("\
+\n\
+/help          - 显示帮助信息\n\
+/clear         - 清空终端\n\
+/lang <en/zh>  - 切换语言 (英文/中文)\n\
+/model <name>  - 设置 AI 模型\n\
+/provider <name> - 设置 API 提供商\n\
+/tools         - 列出可用工具\n\
+/init          - 初始化项目\n\
+/review        - 查看对话上下文\n\
+/config        - 显示当前配置\n\
+/set-key <provider> <key> - 设置 API 密钥\n\
+/save          - 保存当前会话\n\
+/history       - 列出保存的会话\n\
+/load <id>     - 加载会话\n\
+/delete-history <id> - 删除会话\n\
+/git-status    - 显示 git 状态\n\
+/git-log [n]   - 显示 git 日志\n\
+/commit <msg>  - 提交更改\n\
+/push          - 推送到远程仓库\n\
+/pull          - 从远程仓库拉取\n\
+/exit          - 退出 CoderX\n\
+\n"
+            )
         } else {
-            "/tools         - List available tools"
-        };
-        
-        format!("\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}\n\n",
-            translate(&COMMAND_HELP, lang),
-            translate(&COMMAND_CLEAR, lang),
-            translate(&COMMAND_MODEL, lang),
-            translate(&COMMAND_PROVIDER, lang),
-            tools_cmd,
-            translate(&COMMAND_INIT, lang),
-            translate(&COMMAND_REVIEW, lang),
-            translate(&COMMAND_EXIT, lang)
-        )
+            format!("\
+\n\
+/help          - Show this help message\n\
+/clear         - Clear the terminal\n\
+/lang <en/zh>  - Switch language (English/Chinese)\n\
+/model <name>  - Set the AI model\n\
+/provider <name> - Set API provider\n\
+/tools         - List available tools\n\
+/init          - Initialize project context\n\
+/review        - Review conversation context\n\
+/config        - Show current configuration\n\
+/set-key <provider> <key> - Set API key\n\
+/save          - Save current session\n\
+/history       - List saved sessions\n\
+/load <id>     - Load session\n\
+/delete-history <id> - Delete session\n\
+/git-status    - Show git status\n\
+/git-log [n]   - Show git log\n\
+/commit <msg>  - Commit changes\n\
+/push          - Push to remote repo\n\
+/pull          - Pull from remote repo\n\
+/exit          - Exit CoderX\n\
+\n"
+            )
+        }
     }
 
     fn handle_clear(_args: &[String], _session: &SharedSessionState, _messages: &SharedMessageStore, _lang: Language) -> String {
